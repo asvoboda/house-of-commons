@@ -7,17 +7,101 @@
 {% endblock %}
 
 {% block content %}
-<h1>What Do MPs Say in the House of Commons?</h1>
+<h2>What Do MPs Say in the House of Commons?</h2>
 
-<input type="button" name="show" value="show" />
+<form id="input">
+	<label for="type">
+		Type:
+	</label>
+	<select id="type" name="type">
+	  <option value="any">Any</option>
+	  <option value="mp">MP</option>
+	  <option value="quotation">Quotation</option>
+	</select>
+	
+	<!--
+	<label for="sample">
+		Sample:
+	</label>
+	<select id="sample" name="sample">
+	  <option value="repitition">Repitition</option>
+	  <option value="relevance">Relevance</option>
+	</select>
+	-->
+	<!-- QUOTATION INFO -->
+	<!--
+	<label for="language">
+		Language:
+	</label>
+	<select id="language" name="language">
+	  <option value="any">Any</option>
+	  <option value="en">EN</option>
+	  <option value="fr">FR</option>
+	  <option value="other">Other</option>
+	</select>
+	
+	
+	<label for="date-from">
+		Date From:
+	</label>
+	<input name="date-from" type="date">
+	
+	<label for="date-to">
+		Date To:
+	</label>
+	<input name="date-to" type="date">
+	
+	-->
+
+	<!-- MP INFO -->
+	<!--
+	<label for="party">
+		Party:
+	</label>
+	<select id="party" name="party">
+	  <option value="any">Any</option>
+	  <option value="lpc">LPC</option>
+	  <option value="cpc">CPC</option>
+	  <option value="npd">NDP</option>
+	  <option value="bq">BQ</option>
+	  <option value="gpc">GPC</option>
+	  <option value="other">Other</option>
+	</select>
+	-->
+	
+		
+	<label for="order">
+		Order By:
+	</label>
+	<select id="order" name="order">
+	  <option value="any">Any</option>
+	  <option value="relevance">Relevance</option>
+	</select>
+	
+	<!--
+	<label for="search">
+		Search For:
+	</label>
+	<input name="search" type="search">
+	-->
+
+	<input id="query-btn" type="submit" value="Query">
+</form>
+
 
 <script type="text/javascript">
-	$("#show-btn").click( function(){
-		var selectVal = $('#quotation_mp_id :selected').val();
+	
+
+	$("#query-btn").click( function(){
+		
+		var selectVal = $('#input #type:selected').val();
+		
+		/*
 		$.get("quotations/" + encode(selectVal),
 			function(data){
 				$("#result").html(data);
 			});
+		*/
 	});
 </script>
 

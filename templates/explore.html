@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Explore{% endblock %}
+{% block head %}
+  {{ super() }}
+  <style type="text/css">
+  </style>
+{% endblock %}
+
+{% block content %}
+<h2>Explore</h2>
+
+<div id="input">
+	<label for="type">
+		Type:
+	</label>
+	<select id="type" name="type">
+	  <option value="mps">MP</option>
+	  <option value="quotations">Quotation</option>
+	</select>
+
+	<input id="query-btn" type="submit" value="Query">
+</div>
+
+<script>
+
+	var mp_template = "<div> <a href='/mps/<%= id %>'><%= name %></a></div>";
+
+	$('#query-btn').on('click', function() {
+		var val = $('#type').val();
+		$.ajax({
+			url : val, 
+			dataType : 'json',
+			success : function(data) {
+				var compiled = _.template(mp_template);
+				_.each(data.mps, function(mp) {
+					$('#result').append(compiled(mp));
+				});
+			}
+		});
+	});
+	
+	
+
+</script>
+
+<div id="result">
+</div>
+{% endblock %}

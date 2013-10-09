@@ -1,8 +1,12 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
   <head>
     {% block head %}
     <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+	
+	<script type='text/javascript' src="{{ url_for('static', filename='jquery.js') }}"></script>
+	<script type='text/javascript' src="{{ url_for('static', filename='underscore.js') }}"></script>
+	
     <title>{% block title %}{% endblock %} - Hansard</title>
     {% endblock %}
   </head>
@@ -12,4 +16,3 @@
     </div>
   </body>
 </html>
-<!doctype html>
