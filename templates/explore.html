@@ -17,6 +17,22 @@
 	  <option value="mps">MP</option>
 	  <option value="quotations">Quotation</option>
 	</select>
+	
+	<label for="entities">
+		Entity Analysis
+	</label>
+	<select id="entities" name="entities">
+	  <option value="1">Yes</option>
+	  <option value="0">No</option>
+	</select>
+	
+	<label for="sentiment">
+		Sentiment Analysis?
+	</label>
+	<select id="sentiment" name="sentiment">
+	  <option value="1">Yes</option>
+	  <option value="0">No</option>
+	</select>
 
 	<input id="query-btn" type="submit" value="Query">
 </div>
@@ -31,31 +47,30 @@
 	<div> 
 		<a href='/mps/<%= mp %>'>Speaking</a> <a href='/mps/<%= target_mp %>'>To</a> 
 		on <%= date %> about <%= business %>
-		<% if (extra !== undefined) { %>
-			<div><%= extra %></div>
+		<% if (typeof entities !== "undefined") { %>
+			<div><%= entities %></div>
 		<% } %>
 		<div><%= text %></div>
 	</div>
 </script>
 
 <script>
-	var alchemyapi_url = "http://www2.alchemyapi.com/e/15132/calls-/59xcw/306808445";
-	
 	$('#query-btn').on('click', function() {
 		var val = $('#type').val();
-		var sentiment = 1;
+		var sentiment = $('#sentiment').val();
+		var entities = $('#entities').val();
 		var template = $('.quotation_template').html();
 		if (val === "mps") {
 			template = $('.mp_template').html();
 			sentiment = 0;
+			entities = 0;
 		}
 		var compiled = _.template(template);
 		$.ajax({
-			url : val + "?limit=1" + "&sentiment=" + sentiment, 
+			url : val + "?limit=1" + "&sentiment=" + sentiment + "&entities=" + entities, 
 			type: "GET",
 			dataType : 'json',
 			success : function(response) {
-				var extra;
 				var data = response.data;
 				var $result = $("#result");
 				$result.html("");
@@ -65,8 +80,6 @@
 			}
 		});
 	});
-	
-	
 
 </script>
 
