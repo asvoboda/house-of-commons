@@ -21,19 +21,46 @@
 	<input id="query-btn" type="submit" value="Query">
 </div>
 
+<script type="text/template" class="mp_template">
+	<div> 
+		<a href='/mps/<%= id %>'><%= name %></a>
+	</div>
+</script>
+
+<script type="text/template" class="quotation_template">
+	<div> 
+		<a href='/mps/<%= mp %>'>Speaking</a> <a href='/mps/<%= target_mp %>'>To</a> 
+		on <%= date %> about <%= business %>
+		<% if (extra !== undefined) { %>
+			<div><%= extra %></div>
+		<% } %>
+		<div><%= text %></div>
+	</div>
+</script>
+
 <script>
-
-	var mp_template = "<div> <a href='/mps/<%= id %>'><%= name %></a></div>";
-
+	var alchemyapi_url = "http://www2.alchemyapi.com/e/15132/calls-/59xcw/306808445";
+	
 	$('#query-btn').on('click', function() {
 		var val = $('#type').val();
+		var sentiment = 1;
+		var template = $('.quotation_template').html();
+		if (val === "mps") {
+			template = $('.mp_template').html();
+			sentiment = 0;
+		}
+		var compiled = _.template(template);
 		$.ajax({
-			url : val, 
+			url : val + "?limit=1" + "&sentiment=" + sentiment, 
+			type: "GET",
 			dataType : 'json',
-			success : function(data) {
-				var compiled = _.template(mp_template);
-				_.each(data.mps, function(mp) {
-					$('#result').append(compiled(mp));
+			success : function(response) {
+				var extra;
+				var data = response.data;
+				var $result = $("#result");
+				$result.html("");
+				_.each(data, function(item) {
+					$result.append(compiled(item));
 				});
 			}
 		});

@@ -13,3 +13,4 @@ simplejson==3.3.0
 six==1.4.1
 zope.interface==4.0.1
 gunicorn==18.0
+flask-heroku==0.1.4
