@@ -1,40 +1,22 @@
-from flask import Flask, jsonify, abort, request, make_response, url_for
-from flask import render_template
+from hansard import app
 
-from flask.ext.restful import reqparse, abort, Resource
-from flask.ext.sqlalchemy import SQLAlchemy
-from flask.ext.heroku import Heroku
+from flask import jsonify, render_template
+from flask.ext.restful import reqparse
 
-from database import init_db
 from models import MP, Quotation
 
-import unicodedata
-import simplejson as json
-from urllib2 import quote as urlquote
 from alchemyapi import AlchemyAPI
-import requests
+
+import unicodedata
 import os
-
-## START UP
-def create_app():
-	app = Flask(__name__)
-	heroku = Heroku(app)
-	if os.environ.has_key('DATABASE_URL'):
-		app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
-	db = SQLAlchemy(app)
-	#db.init_app(app)
-	return app
-
-alchemyapi = AlchemyAPI()
-	
-app = create_app()
 
 parser = reqparse.RequestParser()
 parser.add_argument('limit', type=int, help='Limit for query length')
 parser.add_argument('sentiment', type=int, help='Perform sentiment analysis')
 parser.add_argument('entities', type=int, help='Perform entity analysis')
 
-### API
+alchemyapi = AlchemyAPI()
+
 @app.route('/mps/<int:mp_id>')
 def mp(mp_id):
 	mp = MP.query.get(mp_id)
@@ -83,9 +65,3 @@ def index():
 def explore():
 	#return app.root_path
 	return render_template('explore.html')
-
-if __name__ == '__main__':
-	debug = True
-	if os.environ.has_key('DATABASE_URL'):
-		debug = False
-	app.run(debug=debug)

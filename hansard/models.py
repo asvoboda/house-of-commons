@@ -1,7 +1,8 @@
 from database import Base
 import datetime
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
-from sqlalchemy.orm import relationship, backref
+
+from hansard import db
 
 class Quotation(Base):
 	__tablename__ = 'quotation'
