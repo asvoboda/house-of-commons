@@ -8,6 +8,4 @@ app.config.from_object('config')
 db = SQLAlchemy(app)
 heroku = Heroku(app)
 
-
-
 from hansard import views, models

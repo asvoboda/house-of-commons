@@ -17,66 +17,113 @@
 	  <option value="mps">MP</option>
 	  <option value="quotations">Quotation</option>
 	</select>
-	
-	<label for="entities">
-		Entity Analysis
-	</label>
-	<select id="entities" name="entities">
-	  <option value="1">Yes</option>
-	  <option value="0">No</option>
-	</select>
-	
-	<label for="sentiment">
-		Sentiment Analysis?
-	</label>
-	<select id="sentiment" name="sentiment">
-	  <option value="1">Yes</option>
-	  <option value="0">No</option>
-	</select>
+	<input type="text" placeholder="Enter a number" id="id" name="id" />
 
 	<input id="query-btn" type="submit" value="Query">
+	<br />
 </div>
 
 <script type="text/template" class="mp_template">
 	<div> 
-		<a href='/mps/<%= id %>'><%= name %></a>
+		<h3><%= name %></h3>
 	</div>
 </script>
 
 <script type="text/template" class="quotation_template">
 	<div> 
-		<a href='/mps/<%= mp %>'>Speaking</a> <a href='/mps/<%= target_mp %>'>To</a> 
+		<a href="javascript://nop/" class="link" data-type="mps" data-id='<%= from_mp[0].id %>'><%= from_mp[0].name %></a> speaking to 
+		<a href="javascript://nop/" class="link" data-type="mps" data-id='<%= target_mp[0].id %>'><%= target_mp[0].name %></a> 
 		on <%= date %> about <%= business %>
-		<% if (typeof entities !== "undefined") { %>
-			<div><%= entities %></div>
-		<% } %>
-		<div><%= text %></div>
+		
+		<a href="javascript://nop/" class="link btn btn-default btn-xs" data-type="quotations" data-id="<%= id %>">Examine</a>
+		<div class="quotation_text"><%= text %></div>
 	</div>
+	<br />
+</script>
+
+<script type="text/template" class="entities_template">
+	<span class="help-block">Analysis by <a href="http://www.alchemyapi.com/">AlchemyAPI</a></span>
+	<table class="table table-striped">
+		<tr>
+			<th>type</th>
+			<th>relevance</th>
+			<th>text</th>
+			<th>sentiment</th>
+			<th>score</th>
+			<th>mixed</th>
+		</tr>
+		<% _.each(obj, function(data, index) { %>
+			<tr>
+				<td class="type"><%= data.type %></td>
+				<td class="relevance"><%= data.relevance %></td>
+				<td class="text"><%= data.text %></td>
+				<td class="sentiment"><%= data.sentiment %></td>
+				<td class="score"><%= data.score %></td>
+				<td class="mixed"><%= data.mixed %></td>
+			</tr>
+		<% }); %>
+	</table>
+	<br />
 </script>
 
 <script>
-	$('#query-btn').on('click', function() {
-		var val = $('#type').val();
-		var sentiment = $('#sentiment').val();
-		var entities = $('#entities').val();
-		var template = $('.quotation_template').html();
-		if (val === "mps") {
-			template = $('.mp_template').html();
-			sentiment = 0;
-			entities = 0;
+	$(document).on('click', '.link', function() {
+		var $this = $(this);
+		var data_id = $this.data('id');
+		var data_type = $this.data('type');
+		if (data_id !== undefined) {
+			var $type = $('#type');
+			var $id = $('#id');
+			
+			$type.val(data_type);
+			$id.val(data_id);
+			$('#query-btn').trigger('click');
 		}
-		var compiled = _.template(template);
+	});
+
+
+	$(document).on('click', '#query-btn',function() {
+		var val = $('#type').val();
+		var id = $('#id').val();
+
+		var isMp = (val === "mps");
+		
+		var compiled_quotation = _.template($('.quotation_template').html());
+		var compiled_mp = _.template($('.mp_template').html());		
+		var compiled_entities = _.template($('.entities_template').html());		
+		
 		$.ajax({
-			url : val + "?limit=1" + "&sentiment=" + sentiment + "&entities=" + entities, 
+			url : 'explore/' + val + '/' + id, 
 			type: "GET",
 			dataType : 'json',
 			success : function(response) {
-				var data = response.data;
+				var data, q_to, q_from;
 				var $result = $("#result");
 				$result.html("");
-				_.each(data, function(item) {
-					$result.append(compiled(item));
-				});
+				if (isMp) {
+					data = response.mp;
+					q_from = response.q_from;
+					q_to = response.q_to;
+					
+					$result.append(compiled_mp(data));
+					
+					_.each(q_from, function(item) {
+						$result.append(compiled_quotation(item));
+					});
+					_.each(q_to, function(item) {
+						$result.append(compiled_quotation(item));
+					});
+					
+					
+				} else {
+					data = response.quotation;
+					var entities = response.entities;
+					$result.append(compiled_entities(entities));
+					$result.append(compiled_quotation(data));
+				}
+
+				
+				$('.quotation_text').shorten();
 			}
 		});
 	});
