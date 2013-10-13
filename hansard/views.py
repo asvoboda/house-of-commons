@@ -20,6 +20,7 @@ parser.add_argument('entities', type=int, help='Perform entity analysis')
 alchemyapi = AlchemyAPI()
 
 @app.route('/mps/<int:mp_id>')
+@app.route('/explore/mps/<int:mp_id>', alias=True)
 def mp(mp_id):
 	mp = MP.query.get(mp_id)
 	
@@ -70,16 +71,3 @@ def index():
 @app.route('/explore')
 def explore():
 	return render_template('explore.html')
-	
-@app.route('/explore/mps/<int:mp_id>')
-def explore_mps(mp_id):
-	mp = MP.query.get(mp_id)
-	if mp:
-		response = {}
-		quotations_from = mp.from_quotations
-		quotations_to = mp.to_quotations
-		
-		q_from = [q.serialize for q in quotations_from]
-		q_to = [q.serialize for q in quotations_to]
-		return jsonify({'mp': mp.serialize, 'q_from': q_from, 'q_to': q_to})
-	return "Error: Not Found", 404
