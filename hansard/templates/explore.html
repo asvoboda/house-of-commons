@@ -50,7 +50,6 @@
 			<th>text</th>
 			<th>sentiment</th>
 			<th>score</th>
-			<th>mixed</th>
 		</tr>
 		<% _.each(obj, function(data, index) { %>
 			<tr>
@@ -59,7 +58,6 @@
 				<td class="text"><%= data.text %></td>
 				<td class="sentiment"><%= data.sentiment %></td>
 				<td class="score"><%= data.score %></td>
-				<td class="mixed"><%= data.mixed %></td>
 			</tr>
 		<% }); %>
 	</table>

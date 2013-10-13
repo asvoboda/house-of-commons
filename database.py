@@ -3,7 +3,7 @@ from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 import os
 
-uri = 'sqlite:///hansard-f.db'
+uri = 'sqlite:///hansard-g.db'
 if os.environ.has_key('DATABASE_URL'):
 	uri = os.environ['DATABASE_URL']
 	

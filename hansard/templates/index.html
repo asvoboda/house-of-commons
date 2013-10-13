@@ -8,15 +8,15 @@
 
 {% block content %}
 <h2>What Do MPs Say in the House of Commons?</h2>
-
+<span class="help-block">Analysis by <a href="http://www.alchemyapi.com/">AlchemyAPI</a></span>
 <form id="input">
 	<label for="type">
 		Type:
 	</label>
 	<select id="type" name="type">
 	  <option value="any">Any</option>
-	  <option value="mp">MP</option>
-	  <option value="quotation">Quotation</option>
+	  <option value="mps">MP</option>
+	  <option value="quotations">Quotation</option>
 	</select>
 	
 	<!--
@@ -69,39 +69,66 @@
 	</select>
 	-->
 	
-		
-	<label for="order">
-		Order By:
-	</label>
-	<select id="order" name="order">
-	  <option value="any">Any</option>
-	  <option value="relevance">Relevance</option>
-	</select>
-	
-	<!--
 	<label for="search">
 		Search For:
 	</label>
 	<input name="search" type="search">
-	-->
+	
+	<label for="search_type">
+		Search Type:
+	</label>
+	<select id="search_type" name="search_type">
+	  <option value="any">Any</option>
+	  <option value="entity">Entity</option>
+	  <option value="keyword">Keyword</option>
+	</select>
 
 	<input id="query-btn" type="submit" value="Query">
 </form>
 
+<script type="text/template" class="entities_template">
+	
+	<table class="table table-striped">
+		<tr>
+			<th>type</th>
+			<th>relevance</th>
+			<th>text</th>
+			<th>sentiment</th>
+			<th>score</th>
+		</tr>
+		<% _.each(obj, function(data, index) { %>
+			<tr>
+				<td class="type"><%= data.type %></td>
+				<td class="relevance"><%= data.relevance %></td>
+				<td class="text"><%= data.text %></td>
+				<td class="sentiment"><%= data.sentiment %></td>
+				<td class="score"><%= data.score %></td>
+			</tr>
+		<% }); %>
+	</table>
+	<br />
+</script>
 
 <script type="text/javascript">
 	
-
-	$("#query-btn").click( function(){
-		
-		var selectVal = $('#input #type:selected').val();
-		
-		/*
-		$.get("quotations/" + encode(selectVal),
-			function(data){
-				$("#result").html(data);
-			});
-		*/
+	$(document).on('submit', 'form', function(e) {
+		e.preventDefault();
+		var params = $(this).serialize();
+		console.log( params );
+		var compiled = _.template($('.entities_template').html());
+		$.ajax({
+			url : 'search?' + params,
+			type: "GET",
+			dataType: 'json',
+			success : function(response) {
+				var $result = $("#result");
+				$result.html("");
+				$result.append(compiled(response.e));
+				$result.append(compiled(response.k));
+				
+			}
+		});
+		return false;
 	});
 </script>
 
