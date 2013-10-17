@@ -42,13 +42,15 @@ class MP(Base):
 class Quotation(Base):
 	__tablename__ = 'quotation'
 	id = Column(Integer, primary_key=True)
-	from_mp = db.relationship('MP', secondary=to_quotations, backref="to_quotations")
-	target_mp = db.relationship('MP', secondary=from_quotations, backref="from_quotations")
+	from_mp = db.relationship('MP', secondary=to_quotations, backref="to_quotations", uselist=False)
+	target_mp = db.relationship('MP', secondary=from_quotations, backref="from_quotations", uselist=False)
 	language = Column(String(5))
 	subject = Column(String(128))
 	business = Column(String(128))
 	date = Column(DateTime)
 	text = Column(String)
+	entities = db.relationship('Entity', backref='quotation', lazy='joined')
+	keywords = db.relationship('Keyword', backref='quotation', lazy='joined')
 
 	def __init__(self, from_mp, target_mp, language, subject, business, date, text):
 		self.from_mp = from_mp
@@ -61,25 +63,30 @@ class Quotation(Base):
 
 	def __repr__(self):
 		return '<Quotation %r>' % self.id
-
+		
 	@property
 	def serialize(self):
-		"""Return object data in easily serializeable format"""
+		if self.target_mp:
+			t_mp = self.target_mp.serialize
+		else:
+			t_mp = {}
 		return {
 			'id'        : self.id,
-			'from_mp'   : [m.serialize for m in self.from_mp],
-			'target_mp' : [m.serialize for m in self.target_mp],
+			'from_mp'   : self.from_mp.serialize,
+			'target_mp' : t_mp,
 			'language'  : self.language,
 			'subject'   : self.subject,
 			'business'  : self.business,
 			'date'      : self.date.strftime("%B %d, %Y"),
-			'text'      : self.text
+			'text'      : self.text,
+			'keywords'  : [k.serialize for k in self.keywords],
+			'entities'  : [e.serialize for e in self.entities],
 		}
 
 class Entity(Base):
 	__tablename__ = 'entity'
 	id = Column(Integer, primary_key=True)
-	quotation = Column(Integer, ForeignKey('quotation.id'))
+	quotation_id = Column(Integer, ForeignKey('quotation.id'))
 	type = Column(String(128))
 	relevance = Column(Float)
 	text = Column(String(256))
@@ -87,8 +94,8 @@ class Entity(Base):
 	score = Column(Float, nullable=True)
 	mixed = Column(Float, nullable=True)
 
-	def __init__(self, quotation, type, relevance, text, sentiment, score, mixed):
-		self.quotation = quotation
+	def __init__(self, quotation_id, type, relevance, text, sentiment, score, mixed):
+		self.quotation_id = quotation_id
 		self.type = type
 		self.relevance = relevance
 		self.text = text
@@ -104,7 +111,7 @@ class Entity(Base):
 		"""Return object data in easily serializeable format"""
 		return {
 			'type'         : self.type,
-			'quotation_id' : self.quotation,
+			'quotation_id' : self.quotation_id,
 			'relevance'    : self.relevance,
 			'text'         : self.text,
 			'sentiment'    : self.sentiment,
@@ -115,14 +122,14 @@ class Entity(Base):
 class Keyword(Base):
 	__tablename__ = 'keyword'
 	id = Column(Integer, primary_key=True)
-	quotation = Column(Integer, ForeignKey('quotation.id'))
+	quotation_id = Column(Integer, ForeignKey('quotation.id'))
 	relevance = Column(Float)
 	text = Column(String(256))
 	sentiment = Column(String(128))
 	score = Column(Float, nullable=True)
 
-	def __init__(self, quotation, relevance, text, sentiment, score):
-		self.quotation = quotation
+	def __init__(self, quotation_id, relevance, text, sentiment, score):
+		self.quotation_id = quotation_id
 		self.relevance = relevance
 		self.text = text
 		self.sentiment = sentiment
@@ -135,7 +142,7 @@ class Keyword(Base):
 	def serialize(self):
 		"""Return object data in easily serializeable format"""
 		return {
-			'quotation_id' : self.quotation,
+			'quotation_id' : self.quotation_id,
 			'relevance'    : self.relevance,
 			'text'         : self.text,
 			'sentiment'    : self.sentiment,

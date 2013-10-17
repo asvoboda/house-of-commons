@@ -10,6 +10,7 @@ from alchemyapi import AlchemyAPI
 import unicodedata
 import os
 import urllib
+import collections
 
 import pdb
 
@@ -28,12 +29,14 @@ alchemyapi = AlchemyAPI()
 @app.route('/mps/<int:mp_id>')
 def mp(mp_id):
 	mp = MP.query.get(mp_id)
-	
 	if mp:
-		response = {'mp': mp.serialize}
-		response['from_quotations'] = [q.serialize for q in mp.from_quotations]
-		response['to_quotations'] = [q.serialize for q in mp.to_quotations]
-		return jsonify(response)
+		response = {}
+		quotations_from = mp.from_quotations
+		quotations_to = mp.to_quotations
+		
+		q_from = [q.serialize for q in quotations_from]
+		q_to = [q.serialize for q in quotations_to]
+		return jsonify({'mp': mp.serialize, 'quotations_from': q_from, 'quotations_to': q_to})
 	return "Error: Not Found", 404
 
 @app.route('/mps')
@@ -44,14 +47,13 @@ def mps():
 	return jsonify(data=[mp.serialize for mp in mp_query.all()])
 		
 @app.route('/quotations/<int:quotation_id>')
-@app.route('/explore/quotations/<int:quotation_id>', alias=True)
 def quotation(quotation_id):
 	args = parser.parse_args()
 	#entities = args.get("entities") if args.has_key("entities") else None
 	#sentiment = args.get("sentiment") if args.has_key("sentiment") else None
 	quot = Quotation.query.get(quotation_id)
 	response = {'quotation': quot.serialize}
-	entities = Entity.query.filter(Entity.quotation==quotation_id).all()
+	entities = Entity.query.filter(Entity.quotation_id == quotation_id).all()
 	if entities:
 		response['entities'] = [e.serialize for e in entities]
 
@@ -66,6 +68,25 @@ def quotations():
 	q_query = Quotation.query.limit(limit) if limit else Quotation.query
 	
 	return jsonify(data=[q.serialize for q in q_query.all()])
+
+def unique(list):
+	known = set()
+	newlist = []
+
+	for item in list:
+		if item is None: continue
+		id = item.id
+		if id in known: continue
+		newlist.append(item)
+		known.add(id)
+	return newlist
+	
+def top(list, number):
+	counter=collections.Counter(list)
+	return [i[0] for i in counter.most_common(number)]
+	
+def serialize_list(list_obj):
+	return [l.serialize for l in list_obj]
 
 @app.route('/entities/<string:term>')
 def entities(term):
@@ -95,40 +116,39 @@ def index():
 @app.route('/explore')
 def explore():
 	return render_template('explore.html')
-	
-@app.route('/explore/mps/<int:mp_id>')
-def explore_mps(mp_id):
-	mp = MP.query.get(mp_id)
-	if mp:
-		response = {}
-		quotations_from = mp.from_quotations
-		quotations_to = mp.to_quotations
-		
-		q_from = [q.serialize for q in quotations_from]
-		q_to = [q.serialize for q in quotations_to]
-		return jsonify({'mp': mp.serialize, 'q_from': q_from, 'q_to': q_to})
-	return "Error: Not Found", 404
+
 	
 @app.route('/search')
 def search():
 	args = parser.parse_args()
 	type = args.get("type") if args.has_key("type") else None
 	search = args.get("search") if args.has_key("search") else None
-	search_type = args.get("search_type") if args.has_key("search_type") else None
 	
 	if not search:
 		return "Error: Not Found", 404
 
 	decoded_search = urllib.unquote(search).decode('utf8') 
-	
 	quotations = []
-	if not type:
-		pass
-	elif type == "mps":
-		entities = Entity.query.filter(Entity.text.like('%' + decoded_search + '%')).order_by(Entity.relevance)
-		keywords = Keyword.query.filter(Keyword.text.like('%' + decoded_search + '%')).order_by(Keyword.relevance)
-		q_e = [e.serialize for e in entities.all()]
-		q_k = [k.serialize for k in keywords.all()]
-		return jsonify({'e': q_e, 'k': q_k})
-	else:
-		pass
+	if type == "mps":
+		response = {}
+		#entities = Entity.query.filter(Entity.text.like('%' + decoded_search + '%')).order_by(-Entity.relevance)
+		keywords = Keyword.query.filter(Keyword.text.like('%' + decoded_search + '%')).order_by(-Keyword.relevance)
+		qu = [k.quotation for k in keywords.all()]
+		
+		from_mps = [q.from_mp for q in qu]
+		highest_from = serialize_list(top(from_mps, 5))
+		
+		target_mps = []
+		for q in qu:
+			if q.target_mp is not None:
+				target_mps.append(q.target_mp)
+
+		highest_target = serialize_list(top(target_mps, 5))
+		
+		return jsonify({'Speaking': serialize_list(unique(from_mps)), 'Speaking-Often': highest_from, 'Spoken': serialize_list(unique(target_mps)), 'Spoken-Often': highest_target})
+	elif type == "quotations":
+		keywords = Keyword.query.filter(Keyword.text.like('%' + decoded_search + '%')).order_by(-Keyword.relevance).limit(20)
+		q_k = [k.quotation.serialize for k in keywords.all()]
+		return jsonify({'quotations': q_k})
+
+	return "Error: Not Found", 404

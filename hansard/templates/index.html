@@ -14,7 +14,6 @@
 		Type:
 	</label>
 	<select id="type" name="type">
-	  <option value="any">Any</option>
 	  <option value="mps">MP</option>
 	  <option value="quotations">Quotation</option>
 	</select>
@@ -70,10 +69,11 @@
 	-->
 	
 	<label for="search">
-		Search For:
+		Search By Relevance For:
 	</label>
 	<input name="search" type="search">
 	
+	<!--
 	<label for="search_type">
 		Search Type:
 	</label>
@@ -82,31 +82,60 @@
 	  <option value="entity">Entity</option>
 	  <option value="keyword">Keyword</option>
 	</select>
-
+	-->
+	
 	<input id="query-btn" type="submit" value="Query">
 </form>
 
-<script type="text/template" class="entities_template">
-	
+<script type="text/template" class="mps_template">
 	<table class="table table-striped">
 		<tr>
-			<th>type</th>
-			<th>relevance</th>
-			<th>text</th>
-			<th>sentiment</th>
-			<th>score</th>
+			<th>Name</th>
+			<th>Party</th>
+			<th>Riding</th>
 		</tr>
-		<% _.each(obj, function(data, index) { %>
+		<% _.each(obj, function(data) { %>
 			<tr>
-				<td class="type"><%= data.type %></td>
-				<td class="relevance"><%= data.relevance %></td>
-				<td class="text"><%= data.text %></td>
-				<td class="sentiment"><%= data.sentiment %></td>
-				<td class="score"><%= data.score %></td>
+				<td class="type"><%= data.name %></td>
+				<td class="party"><%= data.party %></td>
+				<td class="sentiment"><%= data.riding %></td>
 			</tr>
 		<% }); %>
 	</table>
 	<br />
+</script>
+
+<script type="text/template" class="template_quotation_full">
+	<table class="table table-striped">
+		<tr>
+			<th>Name</th>
+			<th>Text</th>
+			<th>Party</th>
+			<th>Date</th>
+		</tr>
+		<% _.each(obj, function(data) { %>
+			<tr>
+				<td class="name"><%= data.from_mp.name %></td>
+				<td class="text"><%= data.text %></td>
+				<td class="party"><%= data.from_mp.party %></td>
+				<td class="date"><%= data.date %></td>
+			</tr>
+		<% }); %>
+	</table>
+	<br />
+</script>
+
+<script type="text/template" class="tab_template">
+	<ul class="nav nav-pills">
+		<% _.each(obj, function(data) { %>
+			<li><a href="#<%= data %>"><%= data %></a></li>
+		<% }); %>
+	</ul>
+	<div class="tab-content">
+		<% _.each(obj, function(data) { %>
+			<div class="tab-pane" id="<%= data %>"></div>
+		<% }); %>
+	</div>
 </script>
 
 <script type="text/javascript">
@@ -114,8 +143,14 @@
 	$(document).on('submit', 'form', function(e) {
 		e.preventDefault();
 		var params = $(this).serialize();
+		var is_mps = $('#type').val() === "mps";
 		console.log( params );
-		var compiled = _.template($('.entities_template').html());
+		var compiled;
+		if (is_mps) {
+			compiled = _.template($('.mps_template').html());
+		} else {
+			compiled = _.template($('.template_quotation_full').html());
+		}
 		$.ajax({
 			url : 'search?' + params,
 			type: "GET",
@@ -123,12 +158,29 @@
 			success : function(response) {
 				var $result = $("#result");
 				$result.html("");
-				$result.append(compiled(response.e));
-				$result.append(compiled(response.k));
+				if (is_mps) {
+					var tab_tmpl = _.template($('.tab_template').html());
+					var keys = Object.keys(response);
+					$result.append(tab_tmpl(keys));
+					_.each(response, function(data, key) {
+						$('#' + key).append(compiled(data));
+					});
+					$('.nav-pills').find('li:first a').click();
+					
+				} else {
+					$result.append(compiled(response.quotations));
+					$('.table').find('.text').shorten();
+				}
+				//$result.append(compiled(response.k));
 				
 			}
 		});
 		return false;
+	});
+	
+	$(document).on('click', '.nav-pills li a', function(e) {
+		e.preventDefault();
+		$(this).tab('show');
 	});
 </script>
 

@@ -9,7 +9,7 @@
 {% block content %}
 <h2>Explore</h2>
 
-<div id="input">
+<form id="input">
 	<label for="type">
 		Type:
 	</label>
@@ -21,7 +21,7 @@
 
 	<input id="query-btn" type="submit" value="Query">
 	<br />
-</div>
+</form>
 
 <script type="text/template" class="mp_template">
 	<div> 
@@ -31,8 +31,11 @@
 
 <script type="text/template" class="quotation_template">
 	<div> 
-		<a href="javascript://nop/" class="link" data-type="mps" data-id='<%= from_mp[0].id %>'><%= from_mp[0].name %></a> speaking to 
-		<a href="javascript://nop/" class="link" data-type="mps" data-id='<%= target_mp[0].id %>'><%= target_mp[0].name %></a> 
+		<a href="javascript://nop/" class="link" data-type="mps" data-id='<%= from_mp.id %>'><%= from_mp.name %></a> 
+		<% if (target_mp) { %>
+			speaking to 
+			<a href="javascript://nop/" class="link" data-type="mps" data-id='<%= target_mp.id %>'><%= target_mp.name %></a> 
+		<% } %>
 		on <%= date %> about <%= business %>
 		
 		<a href="javascript://nop/" class="link btn btn-default btn-xs" data-type="quotations" data-id="<%= id %>">Examine</a>
@@ -80,7 +83,8 @@
 	});
 
 
-	$(document).on('click', '#query-btn',function() {
+	$(document).on('submit', 'form', function(e) {
+		e.preventDefault();
 		var val = $('#type').val();
 		var id = $('#id').val();
 
@@ -91,7 +95,7 @@
 		var compiled_entities = _.template($('.entities_template').html());		
 		
 		$.ajax({
-			url : 'explore/' + val + '/' + id, 
+			url : val + '/' + id, 
 			type: "GET",
 			dataType : 'json',
 			success : function(response) {
@@ -100,8 +104,8 @@
 				$result.html("");
 				if (isMp) {
 					data = response.mp;
-					q_from = response.q_from;
-					q_to = response.q_to;
+					q_from = response.quotations_from;
+					q_to = response.quotations_to;
 					
 					$result.append(compiled_mp(data));
 					
@@ -124,6 +128,7 @@
 				$('.quotation_text').shorten();
 			}
 		});
+		return false;
 	});
 
 </script>
