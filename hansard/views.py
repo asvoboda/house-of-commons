@@ -4,10 +4,9 @@ from flask import jsonify, render_template
 from flask.ext.restful import reqparse
 from hansard.utils import serialize_list, top, unique
 
-from models import MP, Quotation, Entity, Keyword, from_quotations, to_quotations
+from models import MP, Quotation, Entity, Keyword
 
 import urllib
-import collections
 
 parser = reqparse.RequestParser()
 parser.add_argument('limit', type=int, help='Limit for query length')
