@@ -37,3 +37,4 @@ nosetests.xml
 hansard.db
 hansard*.db
 .env
+.idea

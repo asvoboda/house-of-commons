@@ -14,8 +14,8 @@
 		Type:
 	</label>
 	<select id="type" name="type">
-	  <option value="mps">MP</option>
-	  <option value="quotations">Quotation</option>
+		<option value="mps">MP</option>
+		<option value="quotations">Quotation</option>
 	</select>
 	
 	<!--
@@ -23,8 +23,8 @@
 		Sample:
 	</label>
 	<select id="sample" name="sample">
-	  <option value="repitition">Repitition</option>
-	  <option value="relevance">Relevance</option>
+		<option value="repitition">Repitition</option>
+		<option value="relevance">Relevance</option>
 	</select>
 	-->
 	<!-- QUOTATION INFO -->
@@ -96,8 +96,8 @@
 		</tr>
 		<% _.each(obj, function(data) { %>
 			<tr>
-				<td class="type"><%= data.name %></td>
-				<td class="party"><%= data.party %></td>
+				<td class="name"><a href="/explore?type=mps&id=<%= data.id %>"><%= data.name %></a></td>
+				<td class="party"><span class="label label-<%= labelFromParty(data.party) %>"><%= data.party %></span></td>
 				<td class="sentiment"><%= data.riding %></td>
 			</tr>
 		<% }); %>
@@ -115,9 +115,12 @@
 		</tr>
 		<% _.each(obj, function(data) { %>
 			<tr>
-				<td class="name"><%= data.from_mp.name %></td>
-				<td class="text"><%= data.text %></td>
-				<td class="party"><%= data.from_mp.party %></td>
+				<td class="name"><a href="/explore?type=mps&id=<%= data.from_mp.id %>"><%= data.from_mp.name %></a></td>
+				<td class="text">
+					<a href="/explore?type=quotations&id=<%= data.id %>" class="link btn btn-info btn-xs">Examine</a>
+					<%= data.text %>
+				</td>
+				<td class="party"><span class="label label-<%= labelFromParty(data.from_mp.party) %>"><%= data.from_mp.party %></span></td>
 				<td class="date"><%= data.date %></td>
 			</tr>
 		<% }); %>

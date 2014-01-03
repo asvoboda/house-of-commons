@@ -14,18 +14,20 @@
 		Type:
 	</label>
 	<select id="type" name="type">
-	  <option value="mps">MP</option>
-	  <option value="quotations">Quotation</option>
+		<option value="mps">MP</option>
+		<option value="quotations">Quotation</option>
 	</select>
-	<input type="text" placeholder="Enter a number" id="id" name="id" />
+	<input type="text" placeholder="Search By Text or Number" id="id" name="id" />
 
 	<input id="query-btn" type="submit" value="Query">
 	<br />
 </form>
 
+<span class="help-block">Natural Text Analysis by <a href="http://www.alchemyapi.com/">AlchemyAPI</a></span>
+
 <script type="text/template" class="mp_template">
-	<div> 
-		<h3><%= name %></h3>
+	<div>
+		<h3><%= name %><span class="label label-<%= labelFromParty(party) %>"><%= party %></span></h3>
 	</div>
 </script>
 
@@ -38,14 +40,13 @@
 		<% } %>
 		on <%= date %> about <%= business %>
 		
-		<a href="javascript://nop/" class="link btn btn-default btn-xs" data-type="quotations" data-id="<%= id %>">Examine</a>
+		<a class="link btn btn-info btn-xs" data-type="quotations" data-id="<%= id %>">Examine</a>
 		<div class="quotation_text"><%= text %></div>
 	</div>
 	<br />
 </script>
 
 <script type="text/template" class="entities_template">
-	<span class="help-block">Analysis by <a href="http://www.alchemyapi.com/">AlchemyAPI</a></span>
 	<table class="table table-striped">
 		<tr>
 			<th>type</th>
@@ -55,11 +56,19 @@
 			<th>score</th>
 		</tr>
 		<% _.each(obj, function(data, index) { %>
+			<%
+				var label = "default";
+				if (data.sentiment === "negative") {
+					label = "danger";
+				} else if (data.sentiment === "positive") {
+					label = "success";
+				}
+			%>
 			<tr>
 				<td class="type"><%= data.type %></td>
 				<td class="relevance"><%= data.relevance %></td>
 				<td class="text"><%= data.text %></td>
-				<td class="sentiment"><%= data.sentiment %></td>
+				<td class="sentiment"><span class="label label-<%= label %>"><%= data.sentiment %></span></td>
 				<td class="score"><%= data.score %></td>
 			</tr>
 		<% }); %>
@@ -68,6 +77,15 @@
 </script>
 
 <script>
+	$(document).ready(function() {
+		var type = getParameterByName("type", window.location.href);
+		var id = getParameterByName("id", window.location.href);
+
+		$('#type option[value="' + type + '"]').attr("selected", "selected")
+		$("#id").val(id);
+		$("#query-btn").click();
+	});
+
 	$(document).on('click', '.link', function() {
 		var $this = $(this);
 		var data_id = $this.data('id');
@@ -91,8 +109,8 @@
 		var isMp = (val === "mps");
 		
 		var compiled_quotation = _.template($('.quotation_template').html());
-		var compiled_mp = _.template($('.mp_template').html());		
-		var compiled_entities = _.template($('.entities_template').html());		
+		var compiled_mp = _.template($('.mp_template').html());
+		var compiled_entities = _.template($('.entities_template').html());
 		
 		$.ajax({
 			url : val + '/' + id, 
@@ -103,28 +121,35 @@
 				var $result = $("#result");
 				$result.html("");
 				if (isMp) {
-					data = response.mp;
-					q_from = response.quotations_from;
-					q_to = response.quotations_to;
-					
-					$result.append(compiled_mp(data));
-					
-					_.each(q_from, function(item) {
-						$result.append(compiled_quotation(item));
-					});
-					_.each(q_to, function(item) {
-						$result.append(compiled_quotation(item));
-					});
-					
-					
-				} else {
-					data = response.quotation;
-					var entities = response.entities;
-					$result.append(compiled_entities(entities));
-					$result.append(compiled_quotation(data));
-				}
+					_.each(response.data, function(data) {
+						q_from = data.quotations_from;
+						q_to = data.quotations_to;
+						mp = data.mp;
 
-				
+						$result.append(compiled_mp(mp));
+
+						_.each(q_from, function(item) {
+							$result.append(compiled_quotation(item));
+						});
+						_.each(q_to, function(item) {
+							$result.append(compiled_quotation(item));
+						});
+					});
+				} else {
+					_.each(response.data, function(data) {
+						var quotation = data.quotation;
+						var entities = data.entities;
+						var keywords = data.keywords;
+
+						$result.append("<div>");
+						$result.append("<h4>Entities</h4>");
+						$result.append(compiled_entities(entities));
+						$result.append("<h4>Keywords</h4>");
+						$result.append(compiled_entities(keywords));
+						$result.append(compiled_quotation(quotation));
+						$result.append("</div>");
+					});
+				}
 				$('.quotation_text').shorten();
 			}
 		});

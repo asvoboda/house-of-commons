@@ -2,7 +2,7 @@ from hansard import app
 import os
 
 debug = True
-if os.environ.has_key('DATABASE_URL'):
-	debug = False
+if 'DATABASE_URL' in os.environ:
+    debug = False
 
 app.run(debug=debug)
