@@ -1,22 +1,22 @@
 import collections
 
 
-def unique(list):
+def unique(old_list):
     known = set()
-    newlist = []
-    for item in list:
+    new_list = []
+    for item in old_list:
         if item is None:
             continue
-        id = item.id
-        if id in known:
+        m_id = item.id
+        if m_id in known:
             continue
-        newlist.append(item)
-        known.add(id)
-    return newlist
+        new_list.append(item)
+        known.add(m_id)
+    return new_list
 
 
-def top(list, number):
-    counter = collections.Counter(list)
+def top(m_list, number):
+    counter = collections.Counter(m_list)
     return [i[0] for i in counter.most_common(number)]
 
 

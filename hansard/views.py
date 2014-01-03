@@ -45,7 +45,7 @@ def mps_by_term(term):
 
 
 @app.route('/mps')
-def mps():
+def get_mps():
     args = parser.parse_args()
     limit = args.get("limit") if args.has_key("limit") else None
     mps = MP.query.limit(limit) if limit else MP.query
@@ -60,8 +60,12 @@ def quotation_by_id(quotation_id):
     quot = Quotation.query.get(quotation_id)
     response = {'quotation': quot.serialize}
     entities = Entity.query.filter(Entity.quotation_id == quotation_id).all()
+    keywords = Keyword.query.filter(Keyword.quotation_id == quotation_id).all()
+
     if entities:
         response['entities'] = [e.serialize for e in entities]
+    if keywords:
+        response['keywords'] = [k.serialize for k in keywords]
 
     if quot:
         return jsonify(data=[response])
@@ -92,7 +96,7 @@ def quotations_by_term(term):
 
 
 @app.route('/quotations')
-def quotations():
+def get_quotations():
     args = parser.parse_args()
     limit = args.get("limit") if args.has_key("limit") else None
     q_query = Quotation.query.limit(limit) if limit else Quotation.query
@@ -101,7 +105,7 @@ def quotations():
 
 
 @app.route('/entities/<string:term>')
-def entities(term):
+def get_entities(term):
     decoded_term = urllib.unquote(term).decode('utf8')
     entities = Entity.query.filter(Entity.text.ilike('%' + decoded_term + '%'))
 
@@ -112,10 +116,10 @@ def entities(term):
 
 
 @app.route('/keywords/<string:term>')
-def keywords(term):
+def get_keywords(term):
     decoded_term = urllib.unquote(term).decode('utf8')
     keywords = Keyword.query.filter(Keyword.text.ilike('%' + decoded_term + '%'))
-    if entities:
+    if keywords:
         response = {'keywords': [k.serialize for k in keywords]}
         return jsonify(response)
     return "Error: Not Found", 404
@@ -135,16 +139,14 @@ def explore():
 @app.route('/search')
 def search():
     args = parser.parse_args()
-    type = args.get("type") if "type" in args else None
-    search = args.get("search") if "search" in args else None
+    arg_type = args.get("type") if "type" in args else None
+    arg_search = args.get("search") if "search" in args else None
 
     if not search:
         return "Error: Not Found", 404
 
-    decoded_search = urllib.unquote(search).decode('utf8')
-    quotations = []
-    if type == "mps":
-        response = {}
+    decoded_search = urllib.unquote(arg_search).decode('utf8')
+    if arg_type == "mps":
         #entities = Entity.query.filter(Entity.text.like('%' + decoded_search + '%')).order_by(-Entity.relevance)
         keywords = Keyword.query.filter(Keyword.text.ilike('%' + decoded_search + '%')).order_by(-Keyword.relevance)
         qu = [k.quotation for k in keywords.all()]
@@ -161,7 +163,7 @@ def search():
 
         return jsonify({'Speaking': serialize_list(unique(from_mps)), 'Speaking-Often': highest_from,
                         'Spoken': serialize_list(unique(target_mps)), 'Spoken-Often': highest_target})
-    elif type == "quotations":
+    elif arg_type == "quotations":
         keywords = Keyword.query.filter(Keyword.text.ilike('%' + decoded_search + '%')).order_by(-Keyword.relevance).limit(20)
         q_k = [k.quotation.serialize for k in keywords.all()]
         return jsonify({'quotations': q_k})
